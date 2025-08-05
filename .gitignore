@@ -1,0 +1,7 @@
+__pycache__
+.git
+.venv
+.vscode
+
+rm_files/*.png
+wandb
