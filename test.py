@@ -72,10 +72,13 @@ if __name__ == '__main__':
         env=train_env,
         gamma=0.99,
         initial_epsilon=1.0,
-        final_epsilon=0.01,
+        final_epsilon=0.05,
         epsilon_decay_steps=50000,
-        seed=42
-        #num_sample_w=20,
+        gradient_updates = 100,
+        net_arch=[64, 64],
+        seed=42,
+        num_sample_w=50,
+        project_name = "MORM"
     )
     agent.train(
         total_timesteps=100000,

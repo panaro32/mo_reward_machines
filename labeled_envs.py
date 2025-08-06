@@ -10,6 +10,7 @@ class GridWorldEnv(gym.Env):
         self.agent_pos = None
         self.buttonA_pos = None
         self.buttonB_pos = None
+        self.reward_space = None
         self.observation_space = gym.spaces.MultiDiscrete([self.size]*2)
         self.action_space = gym.spaces.Discrete(4)
         self.movement = {
