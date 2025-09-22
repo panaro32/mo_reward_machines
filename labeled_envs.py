@@ -1,3 +1,4 @@
+from itertools import product
 import numpy as np
 import gymnasium as gym
 
@@ -10,18 +11,36 @@ class GridWorldEnv(gym.Env):
         self.agent_pos = None
         self.buttonA_pos = None
         self.buttonB_pos = None
+        self.last_state = None
+        self.last_action = None
         self.observation_space = gym.spaces.MultiDiscrete([self.size]*2)
+        self.states = list(product(*(range(start, start + n) for start, n in zip(self.observation_space.start, self.observation_space.nvec))))
         self.action_space = gym.spaces.Discrete(4)
+        self.actions = list(range(self.action_space.start, self.action_space.start + self.action_space.n))
         self.movement = {
             0: np.array([ 1,  0]),
             1: np.array([ 0,  1]),
             2: np.array([-1,  0]),
             3: np.array([ 0, -1]),
         }
-        self.model()
+        self.reset()
 
     def observe(self):
         return self.agent_pos
+
+    def transitions(self, state, action):
+        pos = np.array(state)
+        delta_pos = self.movement[action]
+        next_pos = np.clip(pos + delta_pos, 0, self.size-1)
+        next_state = tuple(next_pos)
+        next_states = {next_state: 1}
+        return next_states
+
+    def labeling(self, state, action, next_state):
+        prop_values = {}
+        prop_values['a'] = np.array_equal(next_state, self.buttonA_pos)
+        prop_values['b'] = np.array_equal(next_state, self.buttonB_pos)
+        return prop_values
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
@@ -33,8 +52,11 @@ class GridWorldEnv(gym.Env):
         return observation, info
 
     def step(self, action):
-        delta_pos = self.movement[action]
-        self.agent_pos = np.clip(self.agent_pos + delta_pos, 0, self.size-1)
+        self.last_state = self.agent_pos
+        self.last_action = action
+        next_states = self.transitions(self.agent_pos, action)
+        next_state = list(next_states)[np.random.choice(len(next_states), p=list(next_states.values()))]
+        self.agent_pos = np.array(next_state)
         observation = self.observe()
         reward = 0
         terminated = False
@@ -43,10 +65,7 @@ class GridWorldEnv(gym.Env):
         return observation, reward, terminated, truncated, info
 
     def labels(self):
-        prop_values = {}
-        prop_values['a'] = np.array_equal(self.agent_pos, self.buttonA_pos)
-        prop_values['b'] = np.array_equal(self.agent_pos, self.buttonB_pos)
-        return prop_values
+        return self.labeling(self.last_state, self.last_action, self.agent_pos)
 
     def render(self):
         lines = []
@@ -64,15 +83,3 @@ class GridWorldEnv(gym.Env):
                     line.append('.')
             lines.append(' '.join(line))
         print('\n'.join(lines))
-
-    def model(self):
-        self.states = [(row, col) for row in range(self.size) for col in range(self.size)]
-        self.actions = [act for act in range(4)]
-        self.transitions = {}
-        for state in self.states:
-            for action in self.actions:
-                next_state = np.clip(np.array(state) + self.movement[action], 0, self.size-1)
-                self.transitions[(state, action)] = tuple(next_state)
-        self.events = {state: {'a': False, 'b': False} for state in self.states}
-        self.events[(1, self.size-2)]['a'] = True
-        self.events[(self.size-2, 1)]['b'] = True

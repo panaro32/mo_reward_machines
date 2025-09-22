@@ -4,7 +4,7 @@ import gymnasium as gym
 import mo_gymnasium as mo_gym
 #from morl_baselines.multi_policy.pareto_q_learning.pql import PQL
 #from morl_baselines.multi_policy.capql.capql import CAPQL
-from morl_baselines.multi_policy.envelope.envelope import Envelope
+#from morl_baselines.multi_policy.envelope.envelope import Envelope
 import morl_baselines.multi_policy as morl
 from reward_machines import RewardMachine, RewardMachineEnv
 from labeled_envs import GridWorldEnv
@@ -46,13 +46,13 @@ if __name__ == '__main__':
         #for _ in range(3):
             #print(rm_env.step(rm_env.iaction()))
 
-        # move inside RewardMachineEnv
+        # TODO: move inside RewardMachineEnv
         rm_env.set_wrapper_attr('reward_space', gym.spaces.Box(0, 1, shape=(2,)))
         rm_env.set_wrapper_attr('reward_dim', rm_env.get_wrapper_attr('reward_space').shape[0])
         #rm_env.unwrapped.action_space = gym.spaces.Box(0, 3, dtype=int)
 
         rm_env = mo_gym.wrappers.MORecordEpisodeStatistics(rm_env, gamma=0.99)
-    
+
         return rm_env
 
     train_env = make_env()
@@ -68,18 +68,18 @@ if __name__ == '__main__':
     #    gamma=0.99,
     #)
 
-    agent = Envelope(
-        env=train_env,
-        gamma=0.99,
-        initial_epsilon=1.0,
-        final_epsilon=0.01,
-        epsilon_decay_steps=50000,
-        seed=42
-        #num_sample_w=20,
-    )
-    agent.train(
-        total_timesteps=100000,
-        eval_env=test_env,
-        ref_point=np.array([0, 0]),
-        #verbose=True,
-    )
+    #agent = Envelope(
+    #    env=train_env,
+    #    gamma=0.99,
+    #    initial_epsilon=1.0,
+    #    final_epsilon=0.01,
+    #    epsilon_decay_steps=50000,
+    #    seed=42
+    #    #num_sample_w=20,
+    #)
+    #agent.train(
+    #    total_timesteps=100000,
+    #    eval_env=test_env,
+    #    ref_point=np.array([0, 0]),
+    #    #verbose=True,
+    #)

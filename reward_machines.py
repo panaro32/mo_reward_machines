@@ -8,7 +8,7 @@ import pygraphviz as pgv
 
 
 class RewardMachine:
-    """Represents a non-Markovian multi-objective reward function using a finite state machine."""
+    """Represent a non-Markovian multi-objective reward function using a finite state machine."""
 
     def __init__(self, rm_data=()):
         self.nonterminal_states = set()
@@ -17,9 +17,11 @@ class RewardMachine:
         self.prop_symbols = set()
         self.state_transitions = defaultdict(dict)
         if isinstance(rm_data, (str, Path)):
+            self.num_objectives = 1
             self.name = Path(rm_data)
             self.load(rm_data)
         else:
+            self.num_objectives = len(rm_data)
             path = Path(rm_data[0]).parent if rm_data else Path('rm_files')
             self.name = Path(path, f"morm({'+'.join(Path(file).stem for file in rm_data)}).rm")
             self.combine(rm_data)
@@ -88,7 +90,7 @@ class RewardMachine:
         return prop_values
 
     def __repr__(self):
-        lines = [f'Reward Machine: {self.name}', f'#States: {len(self.nonterminal_states)}, #Symbols: {len(self.prop_symbols)}']
+        lines = [f'Reward Machine: {self.name}', f'#Objectives: {self.num_objectives}, #States: {len(self.nonterminal_states)}, #Symbols: {len(self.prop_symbols)}']
         width = max(len(str(self.initial_state)), len(str(self.terminal_state)))
         for curr_state in self.nonterminal_states:
             for prop_formula, (next_state, reward_function) in self.state_transitions[curr_state].items():
@@ -110,7 +112,7 @@ class RewardMachine:
 
 
 class RewardMachineEnv(gym.Wrapper):
-    """Augments a labeled environment with a multi-objective reward machine."""
+    """Augment a labeled environment with a multi-objective reward machine."""
 
     def __init__(self, env, rm, interactive=False):
         super().__init__(env)
