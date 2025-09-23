@@ -137,6 +137,7 @@ class RewardMachineEnv(gym.Wrapper):
         self.curr_env_state, info = self.env.reset(seed=seed)
         self.curr_rm_state = self.rm.reset()
         observation = self.observe(self.curr_env_state, self.curr_rm_state)
+        print(f'RESET: S={self.curr_env_state}, U={self.curr_rm_state}, O={observation}')
         return observation, info
 
     def step(self, action):
@@ -151,6 +152,7 @@ class RewardMachineEnv(gym.Wrapper):
         self.curr_env_state = next_env_state
         self.curr_rm_state, rm_reward, rm_done = self.rm.step(self.curr_rm_state, prop_values, info)
         observation = self.observe(self.curr_env_state, self.curr_rm_state, env_done or rm_done)
+        print(f'STEP: S={self.curr_env_state}, U={self.curr_rm_state}, O={observation}, R={rm_reward}, D={env_done or rm_done}')
         return observation, np.array(rm_reward), env_done or rm_done, truncated, info
 
     def iaction(self):

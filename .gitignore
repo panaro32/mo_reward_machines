@@ -3,5 +3,5 @@ __pycache__
 .venv
 .vscode
 
-rm_files/*.png
+#rm_files/*.png
 wandb

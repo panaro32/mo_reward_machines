@@ -2,16 +2,12 @@ from pathlib import Path
 import numpy as np
 import gymnasium as gym
 import mo_gymnasium as mo_gym
-#from morl_baselines.multi_policy.pareto_q_learning.pql import PQL
+from morl_baselines.multi_policy.pareto_q_learning.pql import PQL
 #from morl_baselines.multi_policy.capql.capql import CAPQL
 #from morl_baselines.multi_policy.envelope.envelope import Envelope
-import morl_baselines.multi_policy as morl
+#import morl_baselines.multi_policy as morl # ???
 from reward_machines import RewardMachine, RewardMachineEnv
 from labeled_envs import GridWorldEnv
-
-
-#https://github.com/panaro32/mo_reward_machines.git
-
 
 gym.register(
     id='GridWorld',
@@ -31,7 +27,8 @@ if __name__ == '__main__':
 
     def make_env():
 
-        rm_path, rm_files = 'rm_files', ['abb_once.rm', 'baa_cycle.rm']
+        #rm_path, rm_files = 'rm_files', ['abb_once.rm', 'baa_cycle.rm']
+        rm_path, rm_files = 'rm_files', ['terminal_a.rm', 'optional_b.rm']
         rm = RewardMachine([Path(rm_path, rm_file) for rm_file in rm_files])
         #rm.draw()
 
@@ -49,7 +46,6 @@ if __name__ == '__main__':
         # TODO: move inside RewardMachineEnv
         rm_env.set_wrapper_attr('reward_space', gym.spaces.Box(0, 1, shape=(2,)))
         rm_env.set_wrapper_attr('reward_dim', rm_env.get_wrapper_attr('reward_space').shape[0])
-        #rm_env.unwrapped.action_space = gym.spaces.Box(0, 3, dtype=int)
 
         rm_env = mo_gym.wrappers.MORecordEpisodeStatistics(rm_env, gamma=0.99)
 
@@ -58,11 +54,11 @@ if __name__ == '__main__':
     train_env = make_env()
     test_env = make_env()
 
-    #agent = PQL(
-    #    env=train_env,
-    #    gamma=0.99,
-    #    ref_point=np.array([0, 0]),
-    #)
+    agent = PQL(
+        env=train_env,
+        gamma=0.99,
+        ref_point=np.array([0, 0]),
+    )
     #agent = CAPQL(
     #    env=train_env,
     #    gamma=0.99,
@@ -77,9 +73,10 @@ if __name__ == '__main__':
     #    seed=42
     #    #num_sample_w=20,
     #)
-    #agent.train(
-    #    total_timesteps=100000,
-    #    eval_env=test_env,
-    #    ref_point=np.array([0, 0]),
-    #    #verbose=True,
-    #)
+
+    agent.train(
+        total_timesteps=100000,
+        eval_env=test_env,
+        ref_point=np.array([0, 0]),
+        #verbose=True,
+    )

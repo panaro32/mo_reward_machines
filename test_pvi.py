@@ -3,9 +3,12 @@ from labeled_envs import GridWorldEnv
 from vi import vi, vi_rm
 from pvi import pvi, pvi_rm
 
-rm1 = RewardMachine('rm_files/abb_once.rm')
-rm2 = RewardMachine('rm_files/baa_cycle.rm')
-rm  = RewardMachine(['rm_files/abb_once.rm', 'rm_files/baa_cycle.rm'])
+#rm1 = RewardMachine('rm_files/abb_once.rm')
+rm1 = RewardMachine('rm_files/terminal_a.rm')
+#rm2 = RewardMachine('rm_files/baa_cycle.rm')
+rm2 = RewardMachine('rm_files/optional_b.rm')
+#rm  = RewardMachine(['rm_files/abb_once.rm', 'rm_files/baa_cycle.rm'])
+rm  = RewardMachine(['rm_files/terminal_a.rm', 'rm_files/optional_b.rm'])
 env = GridWorldEnv()
 rm1_env = RewardMachineEnv(env, rm1)
 rm2_env = RewardMachineEnv(env, rm2)
