@@ -80,3 +80,8 @@ if __name__ == '__main__':
         ref_point=np.array([0, 0]),
         #verbose=True,
     )
+
+    initial_state = train_env.reset()[0]
+    initial_state_index = np.ravel_multi_index(initial_state, agent.env_shape)
+    pareto = agent.get_local_pcs(initial_state_index)
+    print(pareto)
