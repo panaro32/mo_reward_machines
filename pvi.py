@@ -3,9 +3,9 @@ from itertools import product
 import numpy as np
 
 
-def pvi(rm_env, gamma=0.99, epsilon=0.01, size=10, runs=1000):
+def pvi(rm_env, gamma=0.99, epsilon=0.01, size=50, runs=1000):
     """Compute the set of non-dominated vectors per augmented reward machine environment state using Pareto Value Iteration."""
-    env, rm = rm_env.env, rm_env.rm
+    env, rm = rm_env.env.unwrapped, rm_env.rm
     pareto = {state: {(0,) * rm.num_objectives} for state in product(env.states, rm.nonterminal_states)}
     for run in range(runs):
         new_pareto = {}
@@ -29,10 +29,10 @@ def pvi(rm_env, gamma=0.99, epsilon=0.01, size=10, runs=1000):
         if converged(pareto, new_pareto, epsilon):
             break
         pareto = new_pareto
-    return pareto
+    return pareto[env.initial_state, rm.initial_state]
 
 
-def pvi_rm(rm, gamma=0.99, epsilon=0.01, size=10, runs=1000):
+def pvi_rm(rm, gamma=0.99, epsilon=0.01, size=50, runs=1000):
     """Compute the set of non-dominated vectors per reward machine state using Pareto Value Iteration."""
     pareto = {rm_state: {(0,) * rm.num_objectives} for rm_state in rm.nonterminal_states}
     for run in range(runs):
@@ -49,10 +49,10 @@ def pvi_rm(rm, gamma=0.99, epsilon=0.01, size=10, runs=1000):
         if converged(pareto, new_pareto, epsilon):
             break
         pareto = new_pareto
-    return pareto
+    return pareto[rm.initial_state]
 
 
-def best(candidates, size=10):
+def best(candidates, size=50):
     pareto = non_dominated(candidates)
     if size is None:
         return pareto

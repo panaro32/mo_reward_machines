@@ -28,6 +28,7 @@ class RewardMachine:
         self.nonterminal_states = sorted(self.nonterminal_states)
         self.prop_symbols = sorted(map(str, self.prop_symbols))
         self.validate()
+        #self.draw()
 
     def load(self, rm_file):
         with open(rm_file) as rm_file:
@@ -98,25 +99,38 @@ class RewardMachine:
         return '\n'.join(lines)
 
     def draw(self):
-        graph = pgv.AGraph(strict=False, directed=True, rankdir='LR')
+        graph = pgv.AGraph(strict=False, directed=True, rankdir='LR', ranksep=0.75, nodesep=0.5, forcelabels=True, encoding='UTF-8')
         graph.node_attr.update(shape='circle', width=0.5)
+        graph.edge_attr.update(labelfloat=False)
         graph.add_node('start', shape='none', width=0, label='')
         graph.add_edge('start', self.initial_state, label='start')
         for curr_state in self.nonterminal_states:
             for prop_formula, (next_state, reward_function) in self.state_transitions[curr_state].items():
+                right = next_state == self.terminal_state or next_state >= curr_state
                 if next_state == self.terminal_state:
+                    if self.num_objectives == 1 and not reward_function(defaultdict(int)):
+                        continue
+                    if self.num_objectives > 1 and not any(reward_function(defaultdict(int))):
+                        continue
                     next_state = (next_state, curr_state, prop_formula)
                     graph.add_node(next_state, shape='point', width=0.1, label='')
-                graph.add_edge(curr_state, next_state, label=f'{prop_formula}, {reward_function(defaultdict(int))}')
-        graph.draw(self.name.with_suffix('.png'), prog='dot', args='-Gdpi=300')
+                prop_label = str(prop_formula).replace(' ', '').replace('~', '¬').replace('&', '∧').replace('|', '∨')
+                reward_label = str(reward_function(defaultdict(int))).replace(' ', '').replace('[', '⟨').replace(']', '⟩')
+                if right:
+                    graph.add_edge(curr_state, next_state, label=f'{prop_label}, {reward_label}', constraint=True, labelfloat=False)
+                else:
+                    graph.add_edge(curr_state, next_state, xlabel=f'{prop_label}, {reward_label}', constraint=False, labelfloat=True)
+        graph.draw(self.name.with_suffix('.svg'), prog='dot')
+        #graph.draw(self.name.with_suffix('.png'), prog='dot', args='-Gdpi=300')
 
 
 class RewardMachineEnv(gym.Wrapper):
     """Augment a labeled environment with a multi-objective reward machine."""
 
-    def __init__(self, env, rm, interactive=False):
+    def __init__(self, env, rm, use_crm=True, interactive=False):
         super().__init__(env)
         self.rm = rm
+        self.use_crm = use_crm
         self.labels = self.rm.ilabels if interactive else self.env.unwrapped.labels
         self.curr_env_state = None
         self.curr_rm_state = None
@@ -126,6 +140,8 @@ class RewardMachineEnv(gym.Wrapper):
         self.observation_space = gym.spaces.utils.flatten_space(self.dict_space)
         self.rm_obs = dict(zip(self.rm.nonterminal_states, np.identity(len(self.rm.nonterminal_states))))
         self.rm_obs[self.rm.terminal_state] = np.zeros(len(self.rm.nonterminal_states))
+        self.unwrapped.reward_dim = self.rm.num_objectives
+        self.unwrapped.reward_space = gym.spaces.Box(low=0, high=1, shape=(self.rm.num_objectives,))
 
     def observe(self, env_state, rm_state, done=False):
         if done:
@@ -137,22 +153,21 @@ class RewardMachineEnv(gym.Wrapper):
         self.curr_env_state, info = self.env.reset(seed=seed)
         self.curr_rm_state = self.rm.reset()
         observation = self.observe(self.curr_env_state, self.curr_rm_state)
-        print(f'RESET: S={self.curr_env_state}, U={self.curr_rm_state}, O={observation}')
         return observation, info
 
     def step(self, action):
         next_env_state, env_reward, env_done, truncated, info = self.env.step(action)
         prop_values = self.labels()
         info['crm'] = []
-        for crm_state in self.rm.nonterminal_states:
-            crm_obs = self.observe(self.curr_env_state, crm_state)
-            next_crm_state, crm_reward, crm_done = self.rm.step(crm_state, prop_values, info)
-            next_crm_obs = self.observe(next_env_state, next_crm_state, env_done or crm_done)
-            info['crm'].append((crm_obs, action, np.array(crm_reward), next_crm_obs, env_done or crm_done))
+        if self.use_crm:
+            for crm_state in self.rm.nonterminal_states:
+                crm_obs = self.observe(self.curr_env_state, crm_state)
+                next_crm_state, crm_reward, crm_done = self.rm.step(crm_state, prop_values, info)
+                next_crm_obs = self.observe(next_env_state, next_crm_state, env_done or crm_done)
+                info['crm'].append((crm_obs, action, np.array(crm_reward), next_crm_obs, env_done or crm_done))
         self.curr_env_state = next_env_state
         self.curr_rm_state, rm_reward, rm_done = self.rm.step(self.curr_rm_state, prop_values, info)
         observation = self.observe(self.curr_env_state, self.curr_rm_state, env_done or rm_done)
-        print(f'STEP: S={self.curr_env_state}, U={self.curr_rm_state}, O={observation}, R={rm_reward}, D={env_done or rm_done}')
         return observation, np.array(rm_reward), env_done or rm_done, truncated, info
 
     def iaction(self):

@@ -15,13 +15,14 @@ class GridWorldEnv(gym.Env):
         self.last_action = None
         self.observation_space = gym.spaces.MultiDiscrete([self.size]*2)
         self.states = list(product(*(range(start, start + n) for start, n in zip(self.observation_space.start, self.observation_space.nvec))))
+        self.initial_state = tuple(self.observation_space.start)
         self.action_space = gym.spaces.Discrete(4)
         self.actions = list(range(self.action_space.start, self.action_space.start + self.action_space.n))
         self.movement = {
-            0: np.array([ 1,  0]),
-            1: np.array([ 0,  1]),
-            2: np.array([-1,  0]),
-            3: np.array([ 0, -1]),
+            0: np.array([ 1,  0]), # U
+            1: np.array([ 0,  1]), # R
+            2: np.array([-1,  0]), # D
+            3: np.array([ 0, -1]), # L
         }
         self.reset()
 
