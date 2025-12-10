@@ -38,9 +38,12 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
         rm_env = make_env(use_crm=False, log=False)
         rm_env.rm.draw()
         return rm_env
-    if mode == 'pvi':
+    if mode in ['pvi', 'pvi_rm']:
         rm_env = make_env(use_crm=False, log=False)
-        pareto = pvi(rm_env, gamma=gamma)
+        if mode == 'pvi':
+            pareto = pvi(rm_env, gamma=gamma)
+        else:
+            pareto = pvi_rm(rm_env.rm, gamma=gamma)
         plot_pareto(pareto)
         return pareto
     if mode in ['pql', 'crm']:
