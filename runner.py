@@ -18,11 +18,11 @@ gym.register(
     max_episode_steps=200,
 )
 
-def plot_pf(file, mode='all'):
-    if mode == 'all':
+def plot_pf(file, method ='all'):
+    if method == 'all':
         modes = ['pql', 'pvi', 'crm']
     else:
-        modes = [mode]
+        modes = [method]
     for mode in modes:
         df = pd.read_csv(f'{file}_{mode}.csv')
         if mode == 'pql':
@@ -50,6 +50,7 @@ def plot_pf(file, mode='all'):
 
         # Save and show the result as a pdf
         plt.savefig(f'{file}_{mode}.pdf', bbox_inches='tight')
+        plt.close()
 
 def plot_pareto(file, mode='pql'):
     # if rm_env.unwrapped.reward_dim == 2:
@@ -79,21 +80,17 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
         rm_env.rm.draw()
         return rm_env
     data = []
+    columns = ["Run", "Objective 1", "Objective 2"]
     if mode in ['pvi', 'pvi_rm']:
         rm_env = make_env(use_crm=False, log=False)
         if mode == 'pvi':
             pareto = pvi(rm_env, gamma=gamma)
         else:
             pareto = pvi_rm(rm_env.rm, gamma=gamma)
-        columns = ["Run", "Objective 1", "Objective 2"]
 
         for el in pareto:
             # add el to data
             data.append([seed, el[0], el[1]])
-        df = pd.DataFrame(data, columns=columns)
-        df.to_csv(f'{rm_files}_{mode}_{seed}.csv', index=False)
-        #plot_pareto(pareto)
-        return pareto
     if mode in ['pql', 'crm']:
         for run in range(runs):
             train_env = make_env(use_crm=mode=='crm', log=True)
@@ -109,7 +106,7 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
                 seed=seed+run,
                 project_name=f'{rm_files}',
                 experiment_name=f'{mode}',
-                log=False,
+                log=True,
             )
             pareto = agent.train(
                 total_timesteps=TIME,
@@ -117,18 +114,16 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
                 log_every=100,
             )
             # Save pareto set to csv
-            columns = ["Run", "Objective 1", "Objective 2"]
+
             for el in pareto:
                 # add el to data
                 data.append([seed+run, el[0], el[1]])
-        df = pd.DataFrame(data, columns=columns)
-        df.to_csv(f'{rm_files}_{mode}.csv', index=False)
-        print(pareto)
-        #agent.close_wandb()
 
-
-        #plot_pareto(pareto)
-        return pareto
+    # Keep in data only the entries that are not pareto dominated?
+    df = pd.DataFrame(data, columns=columns)
+    df.to_csv(f'{rm_files}_{mode}.csv', index=False)
+    agent.close_wandb()
+    return pareto
 
 
 if __name__ == '__main__':
@@ -138,7 +133,7 @@ if __name__ == '__main__':
     #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='crm'))
 
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pvi'))
-    print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pql'))
+    #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pql'))
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='crm'))
 
     #print(run_experiment(['abb_once.rm',  'baa_cycle.rm'], mode='pvi'))
@@ -155,4 +150,7 @@ if __name__ == '__main__':
 
 
     #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
-    #plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'pql')
+    plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
+    plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
+    #plot_pf(['abb_once2.rm', 'baa_cycle.rm'], mode='pql')
+    #plot_pf(['abb_cylce.rm', 'baa_cycle.rm'], mode='pql')
