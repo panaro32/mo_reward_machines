@@ -2,6 +2,7 @@ from pathlib import Path
 import numpy as np
 import gymnasium as gym
 import mo_gymnasium as mo_gym
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 from reward_machines import RewardMachine, RewardMachineEnv
@@ -17,28 +18,67 @@ gym.register(
     max_episode_steps=200,
 )
 
+def plot_pf(file, mode='all'):
+    if mode == 'all':
+        modes = ['pql', 'pvi', 'crm']
+    else:
+        modes = [mode]
+    for mode in modes:
+        df = pd.read_csv(f'{file}_{mode}.csv')
+        if mode == 'pql':
+            color = 'blue'
+        elif mode == 'crm':
+            color = 'red'
+        else:
+            color = 'green'
 
-def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99, mode='pql', seed=42, runs=5):
+        sns.scatterplot(
+            data=df,
+            x='Objective 1',
+            y='Objective 2',
+            s=120,
+            alpha=0.8,
+            color=color,
+        )
+
+        # Customize labels and title
+        plt.title(f'{mode.upper()} pareto front', fontsize=18)
+        plt.xlabel('Objective 1', fontsize=14)
+        plt.ylabel('Objective 2', fontsize=14)
+        plt.xlim(-0.05, int(np.max(df['Objective 1'])) + 1)
+        plt.ylim(-0.05, int(np.max(df['Objective 2'])) + 1)
+
+        # Save and show the result as a pdf
+        plt.savefig(f'{file}_{mode}.pdf', bbox_inches='tight')
+
+def plot_pareto(file, mode='pql'):
+    # if rm_env.unwrapped.reward_dim == 2:
+    data = pd.read_csv(f'{file}_{mode}.csv')
+    obj1 = data['Objective 1']
+    obj2 = data['Objective 2']
+    #obj1, obj2 = zip(*pareto)
+    plt.scatter(x=obj1, y=obj2)
+    plt.title(f'{mode.upper()} pareto front')
+    plt.xlabel('objective_1')
+    plt.xlim(0, int(max(obj1)) + 1)
+    plt.ylabel('objective_2')
+    plt.ylim(0, int(max(obj2)) + 1)
+
+    plt.savefig(f'{file}_{mode}.pdf', bbox_inches='tight')
+
+def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99, mode='pql', seed=42, runs=30):
     def make_env(use_crm=False, log=False):
         env = gym.make(env_id)
         rm = RewardMachine([Path(rm_path, rm_file) for rm_file in rm_files])
         rm_env = RewardMachineEnv(env, rm, use_crm=use_crm)
         if log: rm_env = mo_gym.wrappers.MORecordEpisodeStatistics(rm_env, gamma=gamma)
         return rm_env
-    def plot_pareto(pareto):
-        #if rm_env.unwrapped.reward_dim == 2:
-        obj1, obj2 = zip(*pareto)
-        plt.scatter(x=obj1, y=obj2)
-        plt.title(f'{mode.upper()} pareto front')
-        plt.xlabel('objective_1')
-        plt.xlim(0, int(max(obj1))+1)
-        plt.ylabel('objective_2')
-        plt.ylim(0, int(max(obj2))+1)
-        plt.show()
+
     if mode == 'draw':
         rm_env = make_env(use_crm=False, log=False)
         rm_env.rm.draw()
         return rm_env
+    data = []
     if mode in ['pvi', 'pvi_rm']:
         rm_env = make_env(use_crm=False, log=False)
         if mode == 'pvi':
@@ -46,7 +86,7 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
         else:
             pareto = pvi_rm(rm_env.rm, gamma=gamma)
         columns = ["Run", "Objective 1", "Objective 2"]
-        data = []
+
         for el in pareto:
             # add el to data
             data.append([seed, el[0], el[1]])
@@ -78,12 +118,11 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
             )
             # Save pareto set to csv
             columns = ["Run", "Objective 1", "Objective 2"]
-            data = []
             for el in pareto:
                 # add el to data
                 data.append([seed+run, el[0], el[1]])
         df = pd.DataFrame(data, columns=columns)
-        df.to_csv(f'{rm_files}_{mode}_{seed}.csv', index=False)
+        df.to_csv(f'{rm_files}_{mode}.csv', index=False)
         print(pareto)
         #agent.close_wandb()
 
@@ -93,14 +132,13 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
 
 
 if __name__ == '__main__':
-    pass
 
     #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pvi'))
-    print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pql'))
+    #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pql'))
     #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='crm'))
 
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pvi'))
-    #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pql'))
+    print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pql'))
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='crm'))
 
     #print(run_experiment(['abb_once.rm',  'baa_cycle.rm'], mode='pvi'))
@@ -114,3 +152,7 @@ if __name__ == '__main__':
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pvi'))
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pql'))
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
+
+
+    #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
+    #plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'pql')
