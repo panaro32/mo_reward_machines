@@ -10,6 +10,7 @@ from labeled_envs import GridWorldEnv
 from pvi import pvi, pvi_rm
 from morl_baselines.multi_policy.pareto_q_learning.pql import PQL
 import pandas as pd
+from morl_baselines.common.pareto import get_non_pareto_dominated_inds
 
 
 gym.register(
@@ -25,6 +26,9 @@ def plot_pf(file, method ='all'):
         modes = [method]
     for mode in modes:
         df = pd.read_csv(f'{file}_{mode}.csv')
+        candidates = df.iloc[:, 1:].to_numpy()
+        nd_inds = get_non_pareto_dominated_inds(candidates)
+        df = df.loc[nd_inds]
         if mode == 'pql':
             color = 'blue'
         elif mode == 'crm':
@@ -36,7 +40,7 @@ def plot_pf(file, method ='all'):
             data=df,
             x='Objective 1',
             y='Objective 2',
-            s=120,
+            s=100,
             alpha=0.8,
             color=color,
         )
@@ -45,8 +49,8 @@ def plot_pf(file, method ='all'):
         plt.title(f'{mode.upper()} pareto front', fontsize=18)
         plt.xlabel('Objective 1', fontsize=14)
         plt.ylabel('Objective 2', fontsize=14)
-        plt.xlim(-0.05, int(np.max(df['Objective 1'])) + 1)
-        plt.ylim(-0.05, int(np.max(df['Objective 2'])) + 1)
+        plt.xlim(-0.05, int(np.max(df['Objective 1'])) + 1.1)
+        plt.ylim(-0.05, int(np.max(df['Objective 2'])) + 1.1)
 
         # Save and show the result as a pdf
         plt.savefig(f'{file}_{mode}.pdf', bbox_inches='tight')
@@ -122,7 +126,8 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
     # Keep in data only the entries that are not pareto dominated?
     df = pd.DataFrame(data, columns=columns)
     df.to_csv(f'{rm_files}_{mode}.csv', index=False)
-    agent.close_wandb()
+    if mode not in ['pvi', 'pvi_rm']:
+        agent.close_wandb()
     return pareto
 
 
@@ -149,8 +154,8 @@ if __name__ == '__main__':
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
 
 
-    #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
+    plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
     plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
     plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
-    #plot_pf(['abb_once2.rm', 'baa_cycle.rm'], mode='pql')
-    #plot_pf(['abb_cylce.rm', 'baa_cycle.rm'], mode='pql')
+    plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')
+    plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], 'all')
