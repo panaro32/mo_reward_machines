@@ -99,15 +99,15 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
         for run in range(runs):
             train_env = make_env(use_crm=mode=='crm', log=True)
             test_env = make_env(use_crm=False, log=True)
-            TIME = 5000
+            TIME = 50000
             agent = PQL(
                 env=train_env,
                 gamma=gamma,
-                ref_point=np.zeros(train_env.unwrapped.reward_dim),
+                ref_point=np.ones(train_env.unwrapped.reward_dim)*(-0.5),
                 initial_epsilon=1.0,
                 epsilon_decay_steps=TIME,
                 final_epsilon=0.1,
-                seed=seed+run,
+                seed=(seed+run),
                 project_name=f'{rm_files}',
                 experiment_name=f'{mode}',
                 log=True,
@@ -115,8 +115,9 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
             pareto = agent.train(
                 total_timesteps=TIME,
                 eval_env=test_env,
-                log_every=100,
+                log_every=1000,
             )
+            agent.close_wandb()
             # Save pareto set to csv
 
             for el in pareto:
@@ -126,16 +127,15 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
     # Keep in data only the entries that are not pareto dominated?
     df = pd.DataFrame(data, columns=columns)
     df.to_csv(f'{rm_files}_{mode}.csv', index=False)
-    if mode not in ['pvi', 'pvi_rm']:
-        agent.close_wandb()
+
     return pareto
 
 
 if __name__ == '__main__':
 
     #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pvi'))
-    #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pql'))
-    #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='crm'))
+    print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pql'))
+   # print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='crm'))
 
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pvi'))
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pql'))
@@ -147,15 +147,15 @@ if __name__ == '__main__':
 
     #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pvi'))
     #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pql'))
-    #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='crm'))
+   # print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='crm'))
 
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pvi'))
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pql'))
-    #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
+   # print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
 
 
-    plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
-    plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
-    plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
-    plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')
-    plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], 'all')
+    #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
+    #plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
+    #plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
+    #plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')
+    #plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], 'all')
