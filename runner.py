@@ -25,14 +25,16 @@ def plot_pf(file, method ='all', eval = False):
     else:
         modes = [method]
     for mode in modes:
-        df = pd.read_csv(f'{file}_{mode}.csv')
-        x = 'Objective 1'
-        y = 'Objective 2'
         if eval:
             df = pd.read_csv(f'{file}_{mode}_eval.csv')
             x = 'objective_1'
             y = 'objective_2'
-        candidates = df.iloc[:, 1:].to_numpy()
+            candidates = df.to_numpy()
+        else:
+            df = pd.read_csv(f'{file}_{mode}.csv')
+            x = 'Objective 1'
+            y = 'Objective 2'
+            candidates = df.iloc[:, 1:].to_numpy()
         nd_inds = get_non_pareto_dominated_inds(candidates)
         df = df.loc[nd_inds]
         if mode == 'pql':
