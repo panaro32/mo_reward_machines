@@ -19,13 +19,19 @@ gym.register(
     max_episode_steps=200,
 )
 
-def plot_pf(file, method ='all'):
+def plot_pf(file, method ='all', eval = False):
     if method == 'all':
         modes = ['pql', 'pvi', 'crm']
     else:
         modes = [method]
     for mode in modes:
         df = pd.read_csv(f'{file}_{mode}.csv')
+        x = 'Objective 1'
+        y = 'Objective 2'
+        if eval:
+            df = pd.read_csv(f'{file}_{mode}_eval.csv')
+            x = 'objective_1'
+            y = 'objective_2'
         candidates = df.iloc[:, 1:].to_numpy()
         nd_inds = get_non_pareto_dominated_inds(candidates)
         df = df.loc[nd_inds]
@@ -38,8 +44,8 @@ def plot_pf(file, method ='all'):
 
         sns.scatterplot(
             data=df,
-            x='Objective 1',
-            y='Objective 2',
+            x=x,
+            y=y,
             s=100,
             alpha=0.8,
             color=color,
@@ -134,8 +140,8 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
 if __name__ == '__main__':
 
     #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pvi'))
-    print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pql'))
-   # print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='crm'))
+    #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='pql'))
+    #print(run_experiment(['abb_once.rm',  'baa_once.rm'],  mode='crm'))
 
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pvi'))
     #print(run_experiment(['abb_once2.rm', 'baa_once2.rm'], mode='pql'))
@@ -146,15 +152,16 @@ if __name__ == '__main__':
     #print(run_experiment(['abb_once.rm',  'baa_cycle.rm'], mode='crm'))
 
     #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pvi'))
-    #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pql'))
-   # print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='crm'))
+    print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pql'))
+    print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='crm'))
 
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pvi'))
-    #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pql'))
-   # print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
+    print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pql'))
+    print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
 
 
     #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
+    #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all', True)
     #plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
     #plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
     #plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')

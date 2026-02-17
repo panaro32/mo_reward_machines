@@ -6,3 +6,5 @@ __pycache__
 
 #rm_files/*.png
 wandb
+hpc
+weights
