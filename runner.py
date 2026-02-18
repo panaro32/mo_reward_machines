@@ -166,11 +166,11 @@ if __name__ == '__main__':
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
 
 
-    #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
-    #plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
-    #plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
-    #plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')
-    #plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], 'all')
+    plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
+    plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
+    plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
+    plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')
+    plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], 'all')
 
     #plot_pf(['abb_once.rm', 'baa_cycle.rm'], 'pql', True)
     #plot_pf(['abb_once.rm', 'baa_cycle.rm'], 'crm', True)
