@@ -57,11 +57,15 @@ def plot_pf(file, method ='all', eval = False):
         plt.title(f'{mode.upper()} pareto front', fontsize=18)
         plt.xlabel('Objective 1', fontsize=14)
         plt.ylabel('Objective 2', fontsize=14)
-        plt.xlim(-0.05, int(np.max(df['Objective 1'])) + 1.1)
-        plt.ylim(-0.05, int(np.max(df['Objective 2'])) + 1.1)
+        plt.xlim(-0.05, int(np.max(df[x])) + 1.1)
+        plt.ylim(-0.05, int(np.max(df[y])) + 1.1)
 
         # Save and show the result as a pdf
-        plt.savefig(f'{file}_{mode}.pdf', bbox_inches='tight')
+        if eval:
+            filename = f'{file}_{mode}_eval.pdf'
+        else:
+            filename = f'{file}_{mode}.pdf'
+        plt.savefig(filename, bbox_inches='tight')
         plt.close()
 
 def plot_pareto(file, mode='pql'):
@@ -154,17 +158,19 @@ if __name__ == '__main__':
     #print(run_experiment(['abb_once.rm',  'baa_cycle.rm'], mode='crm'))
 
     #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pvi'))
-    print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pql'))
-    print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='crm'))
+    #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='pql'))
+    #print(run_experiment(['abb_once2.rm', 'baa_cycle.rm'], mode='crm'))
 
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pvi'))
-    print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pql'))
-    print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
+    #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='pql'))
+    #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
 
 
     #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
-    #plot_pf(['abb_once.rm', 'baa_once.rm'], 'all', True)
     #plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
     #plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
     #plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')
     #plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], 'all')
+
+    #plot_pf(['abb_once.rm', 'baa_cycle.rm'], 'pql', True)
+    #plot_pf(['abb_once.rm', 'baa_cycle.rm'], 'crm', True)
