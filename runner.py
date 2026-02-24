@@ -19,69 +19,72 @@ gym.register(
     max_episode_steps=200,
 )
 
-def plot_pf(file, method ='all', eval = False):
+def plot_pf(file, dir='results', method='all', eval=False):
     if method == 'all':
-        modes = ['pql', 'pvi', 'crm']
+        modes = ['pvi', 'pql', 'crm']
     else:
         modes = [method]
+
+    if eval:
+        evals = [False, True]
+    else:
+        evals = [False]
+
+    x_max, y_max = None, None
     for mode in modes:
-        if eval:
-            df = pd.read_csv(f'{file}_{mode}_eval.csv')
-            x = 'objective_1'
-            y = 'objective_2'
-            candidates = df.to_numpy()
-        else:
-            df = pd.read_csv(f'{file}_{mode}.csv')
-            x = 'Objective 1'
-            y = 'Objective 2'
-            candidates = df.iloc[:, 1:].to_numpy()
-        nd_inds = get_non_pareto_dominated_inds(candidates)
-        df = df.loc[nd_inds]
-        if mode == 'pql':
-            color = 'blue'
-        elif mode == 'crm':
-            color = 'red'
-        else:
-            color = 'green'
+        for eval in evals:
+            if eval and mode == 'pvi':
+                continue
 
-        sns.scatterplot(
-            data=df,
-            x=x,
-            y=y,
-            s=100,
-            alpha=0.8,
-            color=color,
-        )
+            if eval:
+                path = Path(dir, f'{file}_{mode}_eval.csv')
+                df = pd.read_csv(path)
+                x = 'objective_1'
+                y = 'objective_2'
+                candidates = df.to_numpy()
+            else:
+                path = Path(dir, f'{file}_{mode}.csv')
+                df = pd.read_csv(path)
+                x = 'Objective 1'
+                y = 'Objective 2'
+                candidates = df.iloc[:, 1:].to_numpy()
 
-        # Customize labels and title
-        plt.title(f'{mode.upper()} pareto front', fontsize=18)
-        plt.xlabel('Objective 1', fontsize=14)
-        plt.ylabel('Objective 2', fontsize=14)
-        plt.xlim(-0.05, int(np.max(df[x])) + 1.1)
-        plt.ylim(-0.05, int(np.max(df[y])) + 1.1)
+            nd_inds = get_non_pareto_dominated_inds(candidates)
+            df = df.loc[nd_inds]
 
-        # Save and show the result as a pdf
-        if eval:
-            filename = f'{file}_{mode}_eval.pdf'
-        else:
-            filename = f'{file}_{mode}.pdf'
-        plt.savefig(filename, bbox_inches='tight')
-        plt.close()
+            if mode == 'pql':
+                color = 'blue'
+            elif mode == 'crm':
+                color = 'red'
+            else:
+                color = 'green'
 
-def plot_pareto(file, mode='pql'):
-    # if rm_env.unwrapped.reward_dim == 2:
-    data = pd.read_csv(f'{file}_{mode}.csv')
-    obj1 = data['Objective 1']
-    obj2 = data['Objective 2']
-    #obj1, obj2 = zip(*pareto)
-    plt.scatter(x=obj1, y=obj2)
-    plt.title(f'{mode.upper()} pareto front')
-    plt.xlabel('objective_1')
-    plt.xlim(0, int(max(obj1)) + 1)
-    plt.ylabel('objective_2')
-    plt.ylim(0, int(max(obj2)) + 1)
+            sns.scatterplot(
+                data=df,
+                x=x,
+                y=y,
+                s=100,
+                alpha=0.8,
+                color=color,
+            )
 
-    plt.savefig(f'{file}_{mode}.pdf', bbox_inches='tight')
+            if (x_max, y_max) == (None, None):
+                x_max, y_max = int(np.max(df[x])), int(np.max(df[y]))
+
+            # Customize labels and title
+            plt.title(f'{mode.upper()} {'Evaluation' if eval else 'Pareto'} Front', fontsize=20)
+            plt.xlabel('Objective 1', fontsize=16)
+            plt.ylabel('Objective 2', fontsize=16)
+            plt.xlim(-0.05, x_max + 1.05)
+            plt.ylim(-0.05, y_max + 1.05)
+
+            # Save and show the result as a pdf
+            if eval:
+                path = Path(dir, f'{file}_{mode}_eval.pdf')
+            else:
+                path = Path(dir, f'{file}_{mode}.pdf')
+            plt.savefig(path, bbox_inches='tight')
+            plt.close()
 
 def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99, mode='pql', seed=42, runs=30):
     def make_env(use_crm=False, log=False):
@@ -138,7 +141,8 @@ def run_experiment(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=0.99,
 
     # Keep in data only the entries that are not pareto dominated?
     df = pd.DataFrame(data, columns=columns)
-    df.to_csv(f'{rm_files}_{mode}.csv', index=False)
+    path = Path('results', f'{rm_files}_{mode}.csv')
+    df.to_csv(path, index=False)
 
     return pareto
 
@@ -166,11 +170,8 @@ if __name__ == '__main__':
     #print(run_experiment(['abb_cycle.rm', 'baa_cycle.rm'], mode='crm'))
 
 
-    plot_pf(['abb_once.rm', 'baa_once.rm'], 'all')
-    plot_pf(['abb_once2.rm', 'baa_once2.rm'], 'all')
-    plot_pf(['abb_once.rm',  'baa_cycle.rm'], 'all')
-    plot_pf(['abb_once2.rm', 'baa_cycle.rm'], 'all')
-    plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], 'all')
-
-    #plot_pf(['abb_once.rm', 'baa_cycle.rm'], 'pql', True)
-    #plot_pf(['abb_once.rm', 'baa_cycle.rm'], 'crm', True)
+    plot_pf(['abb_once.rm',  'baa_once.rm'],  method='all', eval=True)
+    plot_pf(['abb_once2.rm', 'baa_once2.rm'], method='all', eval=True)
+    plot_pf(['abb_once.rm',  'baa_cycle.rm'], method='all', eval=True)
+    plot_pf(['abb_once2.rm', 'baa_cycle.rm'], method='all', eval=True)
+    plot_pf(['abb_cycle.rm', 'baa_cycle.rm'], method='all', eval=True)
