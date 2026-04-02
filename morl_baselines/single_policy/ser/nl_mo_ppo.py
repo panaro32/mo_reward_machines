@@ -274,6 +274,8 @@ class NLMOPPO(MOPolicy):
             next_acc_reward = (next_acc_reward + (self.gamma**timestep) * self.rewards[step]) * (1.0 - next_done.unsqueeze(-1))
             timestep = (timestep + 1) * (1 - next_done.int().unsqueeze(-1))
 
+            #CRM: storage per RM state, counterfactual accrued rewards?
+
             if "final_info" in infos:
                 for info in infos["final_info"]:
                     if info and "episode" in info and self.log:
@@ -464,6 +466,8 @@ class NLMOPPO(MOPolicy):
             if self.anneal_lr:
                 frac = 1.0 - (iteration - 1.0) / self.num_iterations
                 self.optimizer.param_groups[0]["lr"] = frac * self.learning_rate
+
+            #UPDATE: per timestep
 
             next_obs, next_acc_reward, next_done, timestep, global_step = self._collect_rollouts(
                 next_obs, next_acc_reward, next_done, timestep, global_step
