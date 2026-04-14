@@ -156,7 +156,8 @@ class OuterLoop(MOAgent):
         """Get the config of the algorithm."""
         return {
             "method": self.method,
-            "env_id": self.env.spec.id,
+            #"env_id": self.env.spec.id,
+            "env_id": self.env.envs[0].spec.id,
             "dimensions": self.dim,
             "tolerance": self.tolerance,
             "max_iterations": self.max_iterations,

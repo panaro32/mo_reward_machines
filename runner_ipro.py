@@ -104,8 +104,8 @@ def run_experiment_ipro(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=
     if mode in ['ipro', 'crm']:
         for run in range(runs):
             train_env = mo_gym.wrappers.vector.MOSyncVectorEnv([lambda: make_env(use_crm=mode=='crm', log=True)])
-            test_env = mo_gym.wrappers.vector.MOSyncVectorEnv([lambda: make_env(use_crm=False, log=True)])
-            TIME = 50000
+            test_env = make_env(use_crm=False, log=True)
+            TIME = 500000
             agent = IPRO2D(
                 env = train_env, #(gym.Env): The environment to solve.
                 direction = "maximize", #(str): The direction of the objectives, either "maximize" or "minimize".
@@ -113,7 +113,7 @@ def run_experiment_ipro(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=
                 tolerance = 1e-6, #(float): The tolerance for the algorithm.
                 max_iterations = None, #(int, optional): The maximum number of iterations to run the algorithm.
                 ###update_freq = 1, #(int): The frequency of updating hypervolume improvement heuristic for computing the next referent.
-                reset_agent = False, #(bool): Whether to reset the agent after each iteration.
+                reset_agent = True, #(bool): Whether to reset the agent after each iteration.
                 aug = 0.1, #(float): The augmentation factor for the AASF.
                 scale = 100, #(float): The scale factor for the AASF.
                 iter_total_timesteps = TIME, #(int): The total number of timesteps for each iteration.
@@ -135,22 +135,25 @@ def run_experiment_ipro(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=
                 device = "auto", #(torch.device or str): The device to use for training.
                 log = True, #(bool): Whether to log the training progress.
                 experiment_name = f'{mode}', #(str, optional): The name of the experiment for logging.
-                project_name = f'{rm_files}', #(str): The name of the project for logging.
+                project_name = f'IPRO_{rm_files}', #(str): The name of the project for logging.
                 wandb_entity = None, #(str, optional): The entity for Weights & Biases logging.
-                wandb_mode = "disabled", #(str): The mode for Weights & Biases logging, either "online", "offline", or "disabled".
+                wandb_mode = "online", #(str): The mode for Weights & Biases logging, either "online", "offline", or "disabled".
                 seed = (seed+run), #(int): The random seed for reproducibility.
                 rng = None, #(np.random.Generator, optional): A random number generator for reproducibility.
             )
             pareto = agent.train(
                 eval_env = test_env,
-                #ref_point = np.ones(train_env.unwrapped.reward_dim)*(-0.5),
-                ref_point = np.ones(2)*(-0.5),
-                deterministic = False,
+                ref_point = np.ones(test_env.unwrapped.reward_dim)*(-0.5),
+                deterministic = True,
                 extrema = None,
+                #extrema = (np.ones(test_env.unwrapped.reward_dim)*(0.0), np.ones(test_env.unwrapped.reward_dim)*(1.0)),
                 callback = None,
             )
             agent.close_wandb()
             # Save pareto set to csv
+
+            # keep only PF values, ignore learned policies
+            pareto = [value for value, _policy in pareto]
 
             for el in pareto:
                 # add el to data
@@ -158,7 +161,7 @@ def run_experiment_ipro(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=
 
     # Keep in data only the entries that are not pareto dominated?
     df = pd.DataFrame(data, columns=columns)
-    path = Path('results', f'{rm_files}_{mode}.csv')
+    path = Path('results_ipro', f'{rm_files}_{mode}.csv')
     df.to_csv(path, index=False)
 
     return pareto
@@ -166,8 +169,8 @@ def run_experiment_ipro(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=
 
 if __name__ == '__main__':
 
-    print(run_experiment_ipro(['abb_once.rm',  'baa_once.rm'],  mode='ipro'))
-    #print(run_experiment_ipro(['abb_once2.rm', 'baa_once2.rm'], mode='ipro'))
-    #print(run_experiment_ipro(['abb_once.rm',  'baa_cycle.rm'], mode='ipro'))
-    #print(run_experiment_ipro(['abb_once2.rm', 'baa_cycle.rm'], mode='ipro'))
-    #print(run_experiment_ipro(['abb_cycle.rm', 'baa_cycle.rm'], mode='ipro'))
+    print(run_experiment_ipro(['abb_once.rm',  'baa_once.rm'],  mode='ipro', runs=1))
+    print(run_experiment_ipro(['abb_once2.rm', 'baa_once2.rm'], mode='ipro', runs=1))
+    print(run_experiment_ipro(['abb_once.rm',  'baa_cycle.rm'], mode='ipro', runs=1))
+    print(run_experiment_ipro(['abb_once2.rm', 'baa_cycle.rm'], mode='ipro', runs=1))
+    print(run_experiment_ipro(['abb_cycle.rm', 'baa_cycle.rm'], mode='ipro', runs=1))
