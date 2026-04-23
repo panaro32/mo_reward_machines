@@ -105,7 +105,7 @@ def run_experiment_ipro(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=
         for run in range(runs):
             train_env = mo_gym.wrappers.vector.MOSyncVectorEnv([lambda: make_env(use_crm=mode=='crm', log=True)])
             test_env = make_env(use_crm=False, log=True)
-            TIME = 500000
+            TIME = 50000
             agent = IPRO2D(
                 env = train_env, #(gym.Env): The environment to solve.
                 direction = "maximize", #(str): The direction of the objectives, either "maximize" or "minimize".
@@ -149,7 +149,7 @@ def run_experiment_ipro(rm_files, rm_path='rm_files', env_id='GridWorld', gamma=
                 #extrema = (np.ones(test_env.unwrapped.reward_dim)*(0.0), np.ones(test_env.unwrapped.reward_dim)*(1.0)),
                 callback = None,
             )
-            agent.close_wandb()
+            #agent.close_wandb()
             # Save pareto set to csv
 
             # keep only PF values, ignore learned policies
